@@ -9,3 +9,4 @@ pyjwt
 python-dotenv
 SQLAlchemy
 uvicorn
+python-jose
