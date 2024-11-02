@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from app.config import settings
 import redis.asyncio as aioredis
+from app.models import Base
 
 # Создание асинхронного двигателя SQLAlchemy
 DATABASE_URL = f"postgresql+asyncpg://{settings.db_user}:{settings.db_password}@{settings.db_host}:{settings.db_port}/{settings.db_name}"
@@ -21,3 +22,7 @@ redis = aioredis.from_url(f"redis://{settings.redis_host}:{settings.redis_port}"
 async def get_db():
     async with async_session() as session:
         yield session
+
+async def init_db():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all) 

@@ -3,6 +3,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from app.config import settings
 import redis.asyncio as aioredis
+from typing import Optional
 
 # Настройки для Redis
 redis = aioredis.from_url(f"redis://{settings.redis_host}:{settings.redis_port}")
@@ -11,7 +12,7 @@ redis = aioredis.from_url(f"redis://{settings.redis_host}:{settings.redis_port}"
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Создание JWT токенов
-def create_access_token(data: dict, expires_delta: timedelta = None):
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=settings.access_token_expire_minutes))
     to_encode.update({"exp": expire})
@@ -41,7 +42,11 @@ async def decode_token(token: str):
 
 # Сохранение refresh-токена в Redis
 async def store_refresh_token(user_id: str, token: str):
-    await redis.set(f"refresh_token:{user_id}", token, ex=settings.refresh_token_expire_minutes * 60)
+    try:
+        await redis.set(f"refresh_token:{user_id}", token, ex=settings.refresh_token_expire_minutes * 60)
+    except Exception as e:
+        # Обработка ошибки
+        print(f"Ошибка при сохранении токена в Redis: {e}")
 
 # Проверка refresh-токена в Redis
 async def verify_refresh_token(user_id: str, token: str):

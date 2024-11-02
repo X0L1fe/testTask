@@ -1,28 +1,36 @@
+from app.auth import create_access_token, create_refresh_token, decode_token, get_password_hash, verify_password, store_refresh_token, verify_refresh_token
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas.user import UserCreate, UserResponse
-from app.auth.auth import create_access_token, create_refresh_token, get_password_hash, verify_password, store_refresh_token, verify_refresh_token
-from app.models.user import User
+from app.schemas import UserCreate, UserResponse, AuthRequest, TokenData
+from app.auth import get_password_hash
+from app.models import User
 from app.database import get_db
-from datetime import timedelta
 
 router = APIRouter()
 
 # Регистрация
 @router.post("/register", response_model=UserResponse)
 async def register(user: UserCreate, db: AsyncSession = Depends(get_db)):
-    user_exists = await db.execute(select(User).where(User.username == user.username))
-    if user_exists.scalars().first():
+    # Проверяем, существует ли пользователь
+    result = await db.execute(select(User).where(User.username == user.username))
+    user_exists = result.scalars().first()
+    
+    if user_exists:
         raise HTTPException(status_code=400, detail="Username already registered")
+    
+    # Создаем нового пользователя
     new_user = User(username=user.username, password_hash=get_password_hash(user.password))
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
+    
     return new_user
+
 
 # Вход и создание токенов
 @router.post("/login")
-async def login(user: UserCreate, db: AsyncSession = Depends(get_db)):
+async def login(user: AuthRequest, db: AsyncSession = Depends(get_db)):
     db_user = await db.execute(select(User).where(User.username == user.username))
     db_user = db_user.scalars().first()
     if not db_user or not verify_password(user.password, db_user.password_hash):
@@ -34,7 +42,8 @@ async def login(user: UserCreate, db: AsyncSession = Depends(get_db)):
 
 # Обновление access-токена с помощью refresh-токена
 @router.post("/refresh")
-async def refresh_token(refresh_token: str, db: AsyncSession = Depends(get_db)):
+async def refresh_token(data: TokenData, db: AsyncSession = Depends(get_db)):
+    refresh_token = data.refresh_token
     payload = await decode_token(refresh_token)
     if not payload:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")

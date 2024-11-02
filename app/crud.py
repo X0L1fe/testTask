@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update, delete
-from app.models.task import Task
-from app.schemas.task import TaskCreate, TaskUpdate
+from app.models import Task
+from app.schemas import TaskCreate, TaskUpdate
 
 # Создание новой задачи
 async def create_task(db: AsyncSession, task: TaskCreate, user_id: int):
