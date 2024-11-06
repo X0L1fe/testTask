@@ -20,14 +20,19 @@ async def create_new_task(
 @router.get("/", response_model=List[TaskResponse])
 async def read_tasks(
     status: Optional[str] = None,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: int = Depends(get_current_user)
 ):
-    return await get_tasks(db=db, status=status)
+    return await get_tasks(db=db, user_id=current_user, status=status, )
 
 # Получение задачи по ID
 @router.get("/{task_id}", response_model=TaskResponse)
-async def read_task(task_id: int, db: AsyncSession = Depends(get_db)):
-    task = await get_task_by_id(db=db, task_id=task_id)
+async def read_task(
+    task_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: int = Depends(get_current_user)
+):
+    task = await get_task_by_id(db=db, task_id=task_id, user_id=current_user)
     if not task:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
     return task
@@ -40,11 +45,11 @@ async def update_existing_task(
     db: AsyncSession = Depends(get_db),
     current_user: int = Depends(get_current_user)
 ):
-    existing_task = await get_task_by_id(db=db, task_id=task_id)
+    existing_task = await get_task_by_id(db=db, task_id=task_id, user_id=current_user)
     if not existing_task or existing_task.user_id != current_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
     await update_task(db=db, task_id=task_id, task=task)
-    return await get_task_by_id(db=db, task_id=task_id)
+    return await get_task_by_id(db=db, task_id=task_id, user_id=current_user)
 
 # Удаление задачи по ID
 @router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -53,7 +58,7 @@ async def delete_task_route(
     db: AsyncSession = Depends(get_db),
     current_user: int = Depends(get_current_user)
 ):
-    task = await get_task_by_id(db=db, task_id=task_id)
+    task = await get_task_by_id(db=db, task_id=task_id, user_id=current_user)
     if not task or task.user_id != current_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
     await delete_task(db=db, task_id=task_id)

@@ -13,16 +13,16 @@ async def create_task(db: AsyncSession, task: TaskCreate, user_id: int):
     return new_task
 
 # Получение всех задач с возможностью фильтрации по статусу
-async def get_tasks(db: AsyncSession, status: str = None):
-    query = select(Task)
+async def get_tasks(db: AsyncSession, user_id: int, status: str = None):
+    query = select(Task).where(Task.user_id == user_id)
     if status:
         query = query.where(Task.status == status)
     result = await db.execute(query)
     return result.scalars().all()
 
 # Получение задачи по ID
-async def get_task_by_id(db: AsyncSession, task_id: int):
-    result = await db.execute(select(Task).where(Task.id == task_id))
+async def get_task_by_id(db: AsyncSession, task_id: int, user_id: int):
+    result = await db.execute(select(Task).where(Task.id == task_id, Task.user_id == user_id))
     return result.scalars().first()
 
 # Обновление задачи по ID
