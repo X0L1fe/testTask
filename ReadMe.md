@@ -170,7 +170,7 @@ testBeresnevFastApi/
 
 ### Шаг 7: Редактирование задачи по id
 
-1. Создайте новый `GET` запрос к `http://127.0.0.1:8000/tasks/<номер_задачи>`.
+1. Создайте новый `PUT` запрос к `http://127.0.0.1:8000/tasks/<номер_задачи>`.
 2. В `Headers` добавьте:
    - `accept`: `application/json`
    - `Authorization`: `Bearer <ваш access_token>`
