@@ -9,11 +9,11 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/tasks_db
+      - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/task_db
       - REDIS_HOST=redis
       - ACCESS_TOKEN_EXPIRE_MINUTES=30
       - REFRESH_TOKEN_EXPIRE_MINUTES=1440
-      - SECRET_KEY=your_secret_key
+      - SECRET_KEY=secret_key
     depends_on:
       - db
       - redis
@@ -24,7 +24,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: tasks_db
+      POSTGRES_DB: task_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:

@@ -10,8 +10,14 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 # Получение текущего пользователя
 async def get_current_user(db: AsyncSession = Depends(get_db), token: str = Depends(oauth2_scheme)):
-    user_id = await decode_token(token)
+    token_data = await decode_token(token)
+    user_id = token_data.get("sub") 
     if not user_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     user = await db.execute(select(User).where(User.id == user_id))
-    return user.scalars().first()
+    user_instance = user.scalars().first()
+
+    if not user_instance:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    
+    return user_instance.id

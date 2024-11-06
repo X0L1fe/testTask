@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
-from jose import JWTError, jwt
+import jwt
+from jose import JWTError
 from passlib.context import CryptContext
 from app.config import settings
 import redis.asyncio as aioredis
@@ -36,7 +37,10 @@ def get_password_hash(password):
 async def decode_token(token: str):
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
-        return payload.get("sub")
+        user_id = payload.get("sub")
+        if user_id is None:
+            return None
+        return {"sub": user_id}  # Вернем объект-словарь с ключом "sub"
     except JWTError:
         return None
 
@@ -51,4 +55,8 @@ async def store_refresh_token(user_id: str, token: str):
 # Проверка refresh-токена в Redis
 async def verify_refresh_token(user_id: str, token: str):
     stored_token = await redis.get(f"refresh_token:{user_id}")
-    return stored_token and stored_token.decode("utf-8") == token
+    if stored_token:
+        stored_token = stored_token.decode("utf-8")
+    print(f"Stored token: {stored_token}, Provided token: {token}")
+    return stored_token and stored_token == token
+

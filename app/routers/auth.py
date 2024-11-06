@@ -1,3 +1,4 @@
+from fastapi.security import OAuth2PasswordRequestForm
 from app.auth import create_access_token, create_refresh_token, decode_token, get_password_hash, verify_password, store_refresh_token, verify_refresh_token
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -30,10 +31,10 @@ async def register(user: UserCreate, db: AsyncSession = Depends(get_db)):
 
 # Вход и создание токенов
 @router.post("/login")
-async def login(user: AuthRequest, db: AsyncSession = Depends(get_db)):
-    db_user = await db.execute(select(User).where(User.username == user.username))
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
+    db_user = await db.execute(select(User).where(User.username == form_data.username))
     db_user = db_user.scalars().first()
-    if not db_user or not verify_password(user.password, db_user.password_hash):
+    if not db_user or not verify_password(form_data.password, db_user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password")
     access_token = create_access_token(data={"sub": db_user.id})
     refresh_token = create_refresh_token(data={"sub": db_user.id})

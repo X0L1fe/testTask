@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends
+from fastapi.security import OAuth2PasswordBearer
 from app.database import get_db, init_db, redis
 from app.routers import auth, tasks
 from sqlalchemy.ext.asyncio import AsyncSession

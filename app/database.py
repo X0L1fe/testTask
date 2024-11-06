@@ -1,5 +1,7 @@
+import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import OperationalError
 from app.config import settings
 import redis.asyncio as aioredis
 from app.models import Base
@@ -24,5 +26,14 @@ async def get_db():
         yield session
 
 async def init_db():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all) 
+    retries = 5
+    for i in range(retries):
+        try:
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+            break  # Успешное подключение
+        except OperationalError:
+            if i < retries - 1:
+                await asyncio.sleep(2)  # Ожидание перед повторной попыткой
+            else:
+                raise
