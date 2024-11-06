@@ -66,7 +66,7 @@ testBeresnevFastApi/
    - `grant_type`: `password`
    - `username`: `Docker`
    - `password`: `123456`
-   - `scope`: ``
+   - `scope`: ` `
    - `client_id`: `string`
    - `client_secret`: `string`
 5. Нажмите `Send`. Если аутентификация успешна, вы получите `access_token` и `refresh_token`.
